@@ -52,9 +52,14 @@ function LoginCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState();
   useEffect(async () => {
-    const { access_token } = Object.fromEntries(
+    const { access_token, error, error_description } = Object.fromEntries(
       new URLSearchParams(window.location.hash.substring(1))
     );
+
+    if(error || error_description){
+      setError(`Error ${error_description}`);
+      return;
+    }
 
     if (!access_token) {
       setError("Missing access token");
