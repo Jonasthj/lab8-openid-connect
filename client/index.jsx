@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import {
   BrowserRouter,
@@ -31,7 +31,8 @@ async function fetchJSON(url) {
 }
 
 function Login() {
-  const {discovery_endpoint, client_id, response_type} = useContext(LoginContext);
+  const { discovery_endpoint, client_id, response_type } =
+    useContext(LoginContext);
   useEffect(async () => {
     const { authorization_endpoint } = await fetchJSON(discovery_endpoint);
 
@@ -129,24 +130,31 @@ function Profile() {
   );
 }
 
-const LoginContext = React.createContext({
-  response_type: "token",
-  client_id:
-    "198418837829-3v54q89im2g82tohg2u74ss21q7559v4.apps.googleusercontent.com",
-  discovery_endpoint:
-    "https://accounts.google.com/.well-known/openid-configuration",
-});
+const LoginContext = React.createContext();
 
 function Application() {
+  const { loading, error, data } = useLoader(
+    async () => await fetchJSON("/api/config")
+  );
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error.toString()}</div>;
+  }
+
   return (
-        <BrowserRouter>
-          <Routes>
-            <Route path={"/"} element={<FrontPage />} />
-            <Route path={"/login"} element={<Login />} />
-            <Route path={"/login/callback"} element={<LoginCallback />} />
-            <Route path={"/profile"} element={<Profile />} />
-          </Routes>
-        </BrowserRouter>
+    <LoginContext.Provider value={data}>
+      <BrowserRouter>
+        <Routes>
+          <Route path={"/"} element={<FrontPage />} />
+          <Route path={"/login"} element={<Login />} />
+          <Route path={"/login/callback"} element={<LoginCallback />} />
+          <Route path={"/profile"} element={<Profile />} />
+        </Routes>
+      </BrowserRouter>
+    </LoginContext.Provider>
   );
 }
 
