@@ -56,6 +56,7 @@ function Login() {
       code_challenge: await sha256(code_verifier),
       code_challenge_method: "S256",
       redirect_uri: window.location.origin + "/login/callback",
+      domain_hint: "egms.no",
     };
 
     window.location.href =
@@ -75,47 +76,66 @@ function LoginCallback() {
   const { discovery_endpoint, client_id } = useContext(LoginContext);
   useEffect(async () => {
     const expectedState = window.sessionStorage.getItem("expected_state");
-    const { access_token, error, error_description, state, code } =
+    const expectedNonce = window.sessionStorage.getItem("expected_nonce");
+    const { access_token, error, error_description, state, code} =
       Object.fromEntries(
         new URLSearchParams(window.location.hash.substring(1))
       );
+
+    let accessToken = access_token;
 
     if (expectedState !== state) {
       setError("Unexpected redirect (state mismatch)");
       return;
     }
 
+    /*if (expectedNonce !== nonce) {
+      setError(`Nonce1 ${expectedNonce}, nonce2 ${nonce}`);
+      return;
+    }
+*/
     if (error || error_description) {
       setError(`Error ${error_description}`);
       return;
     }
 
     if (code) {
-      const {token_endpoint} = await fetchJSON(discovery_endpoint);
+      const { token_endpoint } = await fetchJSON(discovery_endpoint);
+
+      const code_verifier = window.sessionStorage.getItem("code_verifier");
 
       const tokenResponse = await fetch(token_endpoint, {
         method: "POST",
-        body: new URLSearchParams({ code }),
+        body: new URLSearchParams({
+          code,
+          grant_type: "authorization_code",
+          client_id,
+          code_verifier,
+        }),
       });
 
-      setError(`token response ${await tokenResponse.text()}`);
-      return;
+      if (tokenResponse.ok) {
+        const { access_token } = await tokenResponse.json();
+        accessToken = access_token;
+      } else {
+        setError(`token response ${await tokenResponse.text()}`);
+        return;
+      }
     }
 
-    if (!access_token) {
+    if (!accessToken) {
       setError("Missing access token");
       return;
     }
-
-    console.log(access_token);
 
     const res = await fetch("/api/login", {
       method: "POST",
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ access_token }),
+      body: JSON.stringify({ access_token: accessToken }),
     });
+
     if (res.ok) {
       navigate("/");
     } else {
