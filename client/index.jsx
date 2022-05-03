@@ -10,6 +10,7 @@ import {
 import { useLoader } from "./useLoader";
 import { fetchJSON } from "./fetchJSON";
 import { randomString } from "./randomString";
+import { sha256 } from "./sha256";
 
 function FrontPage() {
   return (
@@ -23,17 +24,6 @@ function FrontPage() {
       </div>
     </div>
   );
-}
-
-async function sha256(string) {
-  const binaryHash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder("utf-8").encode(string)
-  );
-  return btoa(String.fromCharCode.apply(null, new Uint8Array(binaryHash)))
-    .split("=")[0]
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
 }
 
 function Login() {
@@ -76,8 +66,8 @@ function LoginCallback() {
   const { discovery_endpoint, client_id } = useContext(LoginContext);
   useEffect(async () => {
     const expectedState = window.sessionStorage.getItem("expected_state");
-    const expectedNonce = window.sessionStorage.getItem("expected_nonce");
-    const { access_token, error, error_description, state, code} =
+
+    const { access_token, error, error_description, state, code } =
       Object.fromEntries(
         new URLSearchParams(window.location.hash.substring(1))
       );
@@ -90,10 +80,10 @@ function LoginCallback() {
     }
 
     /*if (expectedNonce !== nonce) {
-      setError(`Nonce1 ${expectedNonce}, nonce2 ${nonce}`);
-      return;
-    }
-*/
+          setError(`Nonce1 ${expectedNonce}, nonce2 ${nonce}`);
+          return;
+        }
+    */
     if (error || error_description) {
       setError(`Error ${error_description}`);
       return;
@@ -111,6 +101,7 @@ function LoginCallback() {
           grant_type: "authorization_code",
           client_id,
           code_verifier,
+          redirect_uri: window.location.origin + "/login/callback",
         }),
       });
 
@@ -173,6 +164,7 @@ function Profile() {
       <h1>{data.name}</h1>
       <img src={data.picture} />
       <div>{data.email}</div>
+      <Link to={"/"}>Front Page</Link>
     </div>
   );
 }

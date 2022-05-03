@@ -23,7 +23,7 @@ async function fetchJSON(url, options) {
 const discovery_endpoint =
   "https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-configuration";
 const client_id = process.env.CLIENT_ID;
-const scope = "openid profile";
+const scope = "openid profile email";
 
 app.get("/api/login", async (req, res) => {
   const { access_token } = req.signedCookies;
@@ -36,14 +36,14 @@ app.get("/api/login", async (req, res) => {
     },
   });
 
-  if (userinfo.ok) {
+  if (userinfo.status === 401) {
+    return res.sendStatus(401);
+  } else if (userinfo.ok) {
     res.json(await userinfo.json());
   } else {
-    console.log(`Failed to fetch ${userinfo.status} ${userinfo.statusText}`);
-    res.sendStatus(500);
+    console.error(`Failed: ${userinfo.status} ${userinfo.statusText}`);
+    return res.sendStatus(500);
   }
-
-  res.json(userinfo);
 });
 
 app.get("/api/config", (req, res) => {
