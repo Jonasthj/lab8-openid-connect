@@ -31,9 +31,9 @@ async function sha256(string) {
     new TextEncoder("utf-8").encode(string)
   );
   return btoa(String.fromCharCode.apply(null, new Uint8Array(binaryHash)))
-      .split("=")[0]
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
+    .split("=")[0]
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
 function Login() {
@@ -72,9 +72,10 @@ function Login() {
 function LoginCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState();
+  const { discovery_endpoint, client_id } = useContext(LoginContext);
   useEffect(async () => {
     const expectedState = window.sessionStorage.getItem("expected_state");
-    const { access_token, error, error_description, state, code_verifier } =
+    const { access_token, error, error_description, state, code } =
       Object.fromEntries(
         new URLSearchParams(window.location.hash.substring(1))
       );
@@ -86,6 +87,18 @@ function LoginCallback() {
 
     if (error || error_description) {
       setError(`Error ${error_description}`);
+      return;
+    }
+
+    if (code) {
+      const {token_endpoint} = await fetchJSON(discovery_endpoint);
+
+      const tokenResponse = await fetch(token_endpoint, {
+        method: "POST",
+        body: new URLSearchParams({ code }),
+      });
+
+      setError(`token response ${await tokenResponse.text()}`);
       return;
     }
 
@@ -108,7 +121,7 @@ function LoginCallback() {
     } else {
       setError(`Failed POST /api/login ${res.status} ${res.statusText}`);
     }
-  });
+  }, []);
 
   if (error) {
     return (
