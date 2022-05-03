@@ -32,6 +32,7 @@ function Login() {
 
     const parameters = {
       response_type,
+      response_mode: "fragment",
       client_id,
       scope,
       redirect_uri: window.location.origin + "/login/callback",
