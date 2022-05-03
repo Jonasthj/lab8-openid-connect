@@ -25,7 +25,7 @@ function FrontPage() {
 }
 
 function Login() {
-  const { discovery_endpoint, client_id, response_type } =
+  const { discovery_endpoint, client_id, response_type, scope } =
     useContext(LoginContext);
   useEffect(async () => {
     const { authorization_endpoint } = await fetchJSON(discovery_endpoint);
@@ -33,7 +33,7 @@ function Login() {
     const parameters = {
       response_type,
       client_id,
-      scope: "user.read",
+      scope,
       redirect_uri: window.location.origin + "/login/callback",
     };
 
@@ -55,6 +55,12 @@ function LoginCallback() {
     const { access_token } = Object.fromEntries(
       new URLSearchParams(window.location.hash.substring(1))
     );
+
+    if (!access_token) {
+      setError("Missing access token");
+      return;
+    }
+
     console.log(access_token);
 
     const res = await fetch("/api/login", {

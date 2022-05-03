@@ -21,8 +21,9 @@ async function fetchJSON(url, options) {
 }
 
 const discovery_endpoint =
-  "https://login.microsoftonline.com/ffd42563-616f-4c7f-87ea-2bf35384e80d/v2.0/.well-known/openid-configuration";
+  "https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-configuration";
 const client_id = process.env.CLIENT_ID;
+const scope = "openid";
 
 app.get("/api/login", async (req, res) => {
   const { access_token } = req.signedCookies;
@@ -47,9 +48,10 @@ app.get("/api/login", async (req, res) => {
 
 app.get("/api/config", (req, res) => {
   res.json({
-    response_type: "token",
+    response_type: "code",
     client_id,
     discovery_endpoint,
+    scope,
   });
 });
 
