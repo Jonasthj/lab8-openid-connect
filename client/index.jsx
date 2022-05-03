@@ -7,6 +7,8 @@ import {
   Routes,
   useNavigate,
 } from "react-router-dom";
+import { useLoader } from "./useLoader";
+import { fetchJSON } from "./fetchJSON";
 
 function FrontPage() {
   return (
@@ -22,14 +24,6 @@ function FrontPage() {
   );
 }
 
-async function fetchJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed ${res.status}`);
-  }
-  return await res.json();
-}
-
 function Login() {
   const { discovery_endpoint, client_id, response_type } =
     useContext(LoginContext);
@@ -39,7 +33,7 @@ function Login() {
     const parameters = {
       response_type,
       client_id,
-      scope: "email profile",
+      scope: "user.read",
       redirect_uri: window.location.origin + "/login/callback",
     };
 
@@ -87,26 +81,6 @@ function LoginCallback() {
   }
 
   return <h1>Please wait...</h1>;
-}
-
-function useLoader(loadingFn) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState();
-  const [error, setError] = useState();
-
-  async function load() {
-    try {
-      setLoading(true);
-      setData(await loadingFn());
-    } catch (error) {
-      setError(error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => load(), []);
-  return { loading, data, error };
 }
 
 function Profile() {
