@@ -6,3 +6,4 @@
 *.iml
 /client/dist/
 /client/.parcel-cache/
+/server/.env
