@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import ReactDOM from "react-dom";
 import {
   BrowserRouter,
@@ -10,15 +10,15 @@ import {
 
 function FrontPage() {
   return (
+    <div>
+      <h1>Front Page</h1>
       <div>
-        <h1>Front Page</h1>
-        <div>
-          <Link to="/login">Login</Link>
-        </div>
-        <div>
-          <Link to="/profile">Profile</Link>
-        </div>
+        <Link to="/login">Login</Link>
       </div>
+      <div>
+        <Link to="/profile">Profile</Link>
+      </div>
+    </div>
   );
 }
 
@@ -31,26 +31,25 @@ async function fetchJSON(url) {
 }
 
 function Login() {
+  const {discovery_endpoint, client_id, response_type} = useContext(LoginContext);
   useEffect(async () => {
-    const { authorization_endpoint } = await fetchJSON(
-        "https://accounts.google.com/.well-known/openid-configuration"
-    );
+    const { authorization_endpoint } = await fetchJSON(discovery_endpoint);
 
     const parameters = {
-      response_type: "token",
-      client_id: process.env.CLIENT_ID,
+      response_type,
+      client_id,
       scope: "email profile",
       redirect_uri: window.location.origin + "/login/callback",
     };
 
     window.location.href =
-        authorization_endpoint + "?" + new URLSearchParams(parameters);
+      authorization_endpoint + "?" + new URLSearchParams(parameters);
   }, []);
 
   return (
-      <div>
-        <h1>Please wait....</h1>
-      </div>
+    <div>
+      <h1>Please wait....</h1>
+    </div>
   );
 }
 
@@ -59,7 +58,7 @@ function LoginCallback() {
   const [error, setError] = useState();
   useEffect(async () => {
     const { access_token } = Object.fromEntries(
-        new URLSearchParams(window.location.hash.substring(1))
+      new URLSearchParams(window.location.hash.substring(1))
     );
     console.log(access_token);
 
@@ -70,18 +69,20 @@ function LoginCallback() {
       },
       body: JSON.stringify({ access_token }),
     });
-    if(res.ok) {
+    if (res.ok) {
       navigate("/");
     } else {
-      setError(`Failed POST /api/login ${res.status} ${res.statusText}`)
+      setError(`Failed POST /api/login ${res.status} ${res.statusText}`);
     }
   });
 
-  if(error) {
-    return <div>
-      <h1>Error</h1>
-      <div>{error}</div>
-    </div>
+  if (error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <div>{error}</div>
+      </div>
+    );
   }
 
   return <h1>Please wait...</h1>;
@@ -120,24 +121,32 @@ function Profile() {
   }
 
   return (
-      <div>
-        <h1>{data.name}</h1>
-        <img src={data.picture}/>
-        <div>{data.email}</div>
-      </div>
+    <div>
+      <h1>{data.name}</h1>
+      <img src={data.picture} />
+      <div>{data.email}</div>
+    </div>
   );
 }
 
+const LoginContext = React.createContext({
+  response_type: "token",
+  client_id:
+    "198418837829-3v54q89im2g82tohg2u74ss21q7559v4.apps.googleusercontent.com",
+  discovery_endpoint:
+    "https://accounts.google.com/.well-known/openid-configuration",
+});
+
 function Application() {
   return (
-      <BrowserRouter>
-        <Routes>
-          <Route path={"/"} element={<FrontPage />} />
-          <Route path={"/login"} element={<Login />} />
-          <Route path={"/login/callback"} element={<LoginCallback />} />
-          <Route path={"/profile"} element={<Profile />} />
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          <Routes>
+            <Route path={"/"} element={<FrontPage />} />
+            <Route path={"/login"} element={<Login />} />
+            <Route path={"/login/callback"} element={<LoginCallback />} />
+            <Route path={"/profile"} element={<Profile />} />
+          </Routes>
+        </BrowserRouter>
   );
 }
 
